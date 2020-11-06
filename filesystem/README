@@ -1,0 +1,42 @@
+**** Followed this documentation http://web.mit.edu/6.033/1997/handouts/html/04sfs.html **** 
+		https://www.cs.uic.edu/~jbell/CourseNotes/OperatingSystems/12_FileSystemImplementation.html
+		https://linoxide.com/linux-command/linux-inode/
+Limitations:
+	1. filename length 10byte long.
+	2. Maximum 1000 files allowed to create.
+	
+
+Few points regarding this filesystem :
+1. Build disk emulation library that will emulate a disk on top of a single file. Its interface includes functito read, write and flush disk blocks.
+	> emulated file is dump.txt. Fill it with dump data while intialising by following command:
+		head -c 6,14,000bytes </dev/zero> dump.txt
+	> 13 bytes will be taken by every FST entry, 13kb will be taken by entire FST.
+	> block size is 4Byte.
+	> Create one more file for inode info.
+	> First 1000 bytes will represent inode state in file.
+	> Next 1,00,000 bytes will represent data block state in file.
+
+	> Inode block size = 100byte , so if we are allowing maximum 1000 files then it will take 100Kb. Remaining 		 space can be used by data blocks now.<Addition and deletion of file can be done by overwriting the exact 		inode block with updated entry>
+	> Data block of size = 4, then there will be 4,00,000.
+
+
+2. second abstraction: 
+	1. Intialisation of file system: 
+		> Read filename - inode number mapping table.
+		> Go through the dump file. Get all unfilled data blocks and inode list.
+	2. Operation ssupport:
+		1. Creation of file/dir:
+			> Validation :- length of file name, inode availbility and datablocks availbility.
+			> Allocate and intialise an inode
+			> update fst with filename and inode number.
+			> update parent with child inode number
+			> put content in disk block.
+			> once the above steps done in inmemory struct then update dump file as well accordingly.
+			> 
+
+
+
+
+
+
+
