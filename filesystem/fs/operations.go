@@ -1,9 +1,7 @@
 package fs
 
 import (
-	"bytes"
-	"encoding/binary"
-	"filesystem/disklib"
+	"Filesystem_Golang/filesystem/disklib"
 	"fmt"
 	"math"
 	"os"
@@ -54,11 +52,14 @@ func (fst fsTable) loadFST(file *os.File) error {
 
 	idx := 0
 	for idx < SizeFST {
-		var value byte
-		_ = binary.Read(bytes.NewReader(data[idx+10:idx+13]), binary.BigEndian, &value)
-		fst[string(data[idx:idx+10])] = int(value)
+		value := strings.TrimSpace(string(data[idx : idx+3]))
+		fileName := strings.TrimSpace(string(data[idx+3 : idx+13]))
+		if fileName != "" {
+			fst[fileName], _ = strconv.Atoi(value)
+		}
 		idx = idx + CellFSTSize
 	}
+	fmt.Println("after loading ", fst)
 
 	return nil
 }
@@ -110,11 +111,10 @@ func (fs *FileSystem) CreateFile(fileName string, data string, parentInodeNum in
 
 	// Validation of the arguments
 	// TODO same name file in the directory.
-	if err := validateCreationRequest(fileName); err != nil {
+	if err := fs.validateCreationRequest(fileName); err != nil {
 		fmt.Println("Error: Creation request fails while validating : ", err)
 		return err
 	}
-
 	dataBlockRequired := int(math.Ceil(float64(len(data) / DataBlockSize)))
 	// Check resources available or not
 	if err := resourceAvailable(fs, dataBlockRequired); err != nil {
@@ -122,6 +122,7 @@ func (fs *FileSystem) CreateFile(fileName string, data string, parentInodeNum in
 		return err
 	}
 
+	fmt.Println("filename", fileName, "datablockrequired", dataBlockRequired)
 	// Get Parent Inode
 	parInode, err := getInodeInfo(parentInodeNum)
 	if err != nil {
@@ -130,7 +131,8 @@ func (fs *FileSystem) CreateFile(fileName string, data string, parentInodeNum in
 	}
 
 	// check parent inode has space to accomodate new file/ directory inside it.
-	if len(parInode) < (InodeBlockSize - 4) { // here 4 is used because 1 for comma and 3 bytes representing inode number.
+	// here 4 is used because 1 for comma and 3 bytes representing inode number.
+	if len(parInode) < (InodeBlockSize - 4) {
 		return fmt.Errorf("Parent inode doesn't have space left to accomodate new file in it")
 	}
 
@@ -156,6 +158,8 @@ func (fs *FileSystem) CreateFile(fileName string, data string, parentInodeNum in
 		return err
 	}
 
+	// TODO : After successfull creation of file, update the directory data block accordingly..
+
 	fmt.Println("successful updation in disk", inode)
 
 	return nil
@@ -168,10 +172,13 @@ func (fs *FileSystem) UpdateFst(file inode) error {
 	return nil
 }
 
-func validateCreationRequest(fileName string) error {
+func (fs *FileSystem) validateCreationRequest(fileName string) error {
 	if len(fileName) > FileNameSize {
 		return fmt.Errorf("File name length exceeds upperlimit. we only support file names of length %d", FileNameSize)
 	}
+
+	//TODO: Check fileName already exists in folder or not!!!
+	// Get all inodes under parent folder ; then check for these inodes corresponding filename ; matches or not!!
 	return nil
 }
 

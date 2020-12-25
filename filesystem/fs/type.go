@@ -45,6 +45,7 @@ type inode struct {
 
 // FileSystem struct stores content of dumpFile.
 type FileSystem struct {
+	currentFolder	  int			// will contain inode number of current folder.
 	fileSystemTable   fsTable       // will contain mapping of filename and inode.
 	nextFreeInode     inodeList     // will contain inode number which is free.
 	nextFreeDataBlock dataBlockList // will contain data block number which is free.
